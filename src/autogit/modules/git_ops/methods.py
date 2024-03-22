@@ -6,6 +6,7 @@ import typing as t
 import git
 from git import Repo
 
+
 def validate_git_repo(repo: Repo = None) -> Repo:
     assert repo, ValueError("Missing a git.Repo() object")
     assert isinstance(repo, Repo), TypeError(
@@ -16,6 +17,24 @@ def validate_git_repo(repo: Repo = None) -> Repo:
     )
 
     return repo
+
+
+def validate_git_origin(origin: git.Remote = None) -> git.Remote:
+    assert origin, ValueError("Missing a git origin")
+    assert isinstance(origin, git.Remote), TypeError(
+        f"origin must be of type git.RemoteReference. Got type: ({type(origin)})"
+    )
+
+    return origin
+
+
+def validate_git_branch(branch: git.Head = None) -> git.Head:
+    assert branch, ValueError("Missing branch (a git.head object)")
+    assert isinstance(branch, git.Head), TypeError(
+        f"Expected head to be of type git.Head. Got type: ({type(branch)})"
+    )
+
+    return branch
 
 
 def load_repopath(repo_file: t.Union[str, Path] = Path("repo_path")) -> Path:

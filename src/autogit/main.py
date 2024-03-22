@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import json
 from pathlib import Path
 import typing as t
@@ -10,6 +11,27 @@ import git
 from modules import git_ops
 from packages import git_puller
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def benchmark(name: str = "Unnamed benchmark", description: str = None):
+    start_time = time.process_time()
+
+    yield
+
+    end_time = time.process_time()
+
+    total_time = end_time - start_time
+
+    if description:
+        msg = f"{description}.\n{name} execution time: {total_time}"
+    else:
+        msg = f"Execution time: {total_time}"
+
+    print(msg)
+
 
 class WelcomeMsgData(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -56,7 +78,9 @@ def main(exclude_branches: list[str] | None = None):
     if not CONTINUE:
         exit(1)
 
-    REPO: GitRepository = GitRepository(local_path=GIT_REPO_PATH)
+    REPO: GitRepository = GitRepository(
+        local_path=GIT_REPO_PATH, exclude_branches=exclude_branches
+    )
     # print(f"Git repository: {REPO}")
     STARTING_BRANCH: git.Head = REPO._repo.head.ref
 
@@ -66,8 +90,11 @@ def main(exclude_branches: list[str] | None = None):
     welcome_msg(welcome_msg_data)
 
     try:
-        # git_puller.pull(REPO._repo)
-        REPO.pull(exclude_branches)
+        with benchmark(
+            name="git_puller.pull()", description="Pulling with git_puller()"
+        ):
+            git_puller.pull(REPO, exclude_branches=exclude_branches)
+
     except Exception as exc:
         msg = Exception(f"Unhandled exception running auto puller. Details: {exc}")
 

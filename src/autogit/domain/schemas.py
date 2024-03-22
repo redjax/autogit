@@ -14,11 +14,16 @@ from pydantic import (
     field_validator,
 )
 
+
 class GitRepository(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, exclude=["_repo"])
 
     local_path: t.Union[str, Path] = Field(
         default=None, description="Path to repository on local machine"
+    )
+    exclude_branches: list[str] | None = Field(
+        default_factory=[],
+        description="A list of branch names (as strings) to ignore when running automated git actions.",
     )
 
     @field_validator("local_path")
@@ -105,6 +110,9 @@ class GitRepository(BaseModel):
             raise msg
 
     def pull(self, exclude_branches: list[str] | None = None) -> bool:
+
+        if exclude_branches is None or len(exclude_branches) == 0:
+            exclude_branches = self.exclude_branches
 
         origin: git.RemoteReference = self._repo.remotes.origin
         ## Store branch before synch operations
