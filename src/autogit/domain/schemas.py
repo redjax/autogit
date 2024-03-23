@@ -4,7 +4,8 @@ from pathlib import Path
 import typing as t
 
 import git
-from modules import git_ops
+
+# from modules import git_ops
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -18,11 +19,12 @@ from pydantic import (
 class GitRepository(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, exclude=["_repo"])
 
+    repo_url: str | None = Field(default=None, description="Remote repository's URL.")
     local_path: t.Union[str, Path] = Field(
         default=None, description="Path to repository on local machine"
     )
     exclude_branches: list[str] | None = Field(
-        default_factory=[],
+        default=None,
         description="A list of branch names (as strings) to ignore when running automated git actions.",
     )
 
@@ -47,18 +49,53 @@ class GitRepository(BaseModel):
     @property
     def _repo(self) -> git.Repo:
         if not self.exists:
-            raise FileNotFoundError(f"Could not find path '{self.local_path}'")
+            print(
+                f"[WARNING] Repository does not exist at {self.local_path}. Attempting to clone."
+            )
+            try:
+                try:
+                    clone_repo: git.Repo = git.Repo.clone_from(
+                        url=self.repo_url, to_path=self.local_path
+                    )
+                except Exception as exc:
+                    msg = Exception(
+                        f"Unhandled exception cloning git repo from url '{self.repo_url}' to local path '{self.local_path}'. Details: {exc}"
+                    )
 
+                    raise msg
+
+            except Exception as exc:
+                msg = Exception(
+                    f"Unhandled exception cloning repository from URL '{self.repo_url}'. Details: {exc}"
+                )
+
+                raise msg
         try:
-            repo: git.Repo = git_ops.load_git_repo(self.local_path)
+            _repo: git.Repo = git.Repo(path=self.local_path)
 
-            repo = git_ops.validate_git_repo(repo)
-
-            return repo
+            return _repo
 
         except Exception as exc:
             msg = Exception(
-                f"Couldn't initialize git repository at path '{self.local_path}'. Details: {exc}"
+                f"Unhandled exception loading git repository at path '{self.local_path}'. Details: {exc}"
+            )
+
+            raise msg
+
+    @computed_field
+    @property
+    def _repo(self) -> git.Repo:
+        if not self.exists:
+            print(FileNotFoundError(f"Could not find path '{self.local_path}'"))
+
+        try:
+            _repo: git.Repo = git.Repo(path=self.local_path)
+
+            return _repo
+
+        except Exception as exc:
+            msg = Exception(
+                f"Unhandled exception loading git repository at path '{self.local_path}'. Details: {exc}"
             )
 
             raise msg
@@ -72,7 +109,7 @@ class GitRepository(BaseModel):
     @property
     def branches(self) -> list[git.Head]:
         try:
-            branches: list[git.Head] = git_ops.get_branchnames(repo=self._repo)
+            branches: list[git.Head] = self._repo.heads
 
             return branches
 
@@ -85,7 +122,7 @@ class GitRepository(BaseModel):
     @property
     def remotes(self) -> list[git.Remote]:
         try:
-            remotes: list[git.Remote] = git_ops.get_remotes(repo=self._repo)
+            remotes: list[git.Remote] = self._repo.remotes
 
             return remotes
 
@@ -98,7 +135,7 @@ class GitRepository(BaseModel):
     @property
     def untracked_files(self) -> list[str]:
         try:
-            untracked: list[str] = git_ops.get_untracked(repo=self._repo)
+            untracked: list[str] = self._repo.untracked_files
 
             return untracked
 
@@ -109,12 +146,12 @@ class GitRepository(BaseModel):
 
             raise msg
 
-    def pull(self, exclude_branches: list[str] | None = None) -> bool:
+    def autopull(self, exclude_branches: list[str] | None = None) -> bool:
 
         if exclude_branches is None or len(exclude_branches) == 0:
             exclude_branches = self.exclude_branches
 
-        origin: git.RemoteReference = self._repo.remotes.origin
+        origin: git.Remote = self._repo.remotes.origin
         ## Store branch before synch operations
         STARTING_BRANCH: git.Head = self._repo.head.ref
 
