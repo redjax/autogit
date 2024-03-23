@@ -2,19 +2,18 @@
 name = "autogit.py"
 version = "0.1.0"
 description = "Automated git operations."
-authors = [
-    {name = "redjax", email = "none@none.com"},
-]
+authors = [{ name = "redjax", email = "none@none.com" }]
 dependencies = [
     "GitPython>=3.1.42",
     "pydantic>=2.6.4",
     "pendulum>=3.0.0",
     "loguru>=0.7.2",
     "rich>=13.7.1",
+    "click>=8.1.7",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 [build-system]
 requires = ["pdm-backend"]
@@ -31,4 +30,6 @@ dev = [
     "ipykernel>=6.29.3",
     "pex>=2.0.3",
     "ruff>=0.3.3",
+    "pytest>=8.1.1",
+    "pytest-xdist>=3.5.0",
 ]
