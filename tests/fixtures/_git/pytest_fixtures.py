@@ -8,6 +8,7 @@ import typing as t
 import git
 import pytest
 
+
 @pytest.fixture
 def git_repo_url() -> str:
     return "https://github.com/redjax/test_repo.git"

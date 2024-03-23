@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import typing as t
 
-from autogit.domain import GitRepository
+from autogit.domain import GitController
 import git
+
 
 def clone_repo_to_path(
     repo_url: str = None, local_path: t.Union[str, Path] = None

@@ -1,6 +1,6 @@
 import click
 
-from domain import GitRepository
+from domain import GitController
 
 import git
 import rich
@@ -21,4 +21,4 @@ def main():
 # )
 
 if __name__ == "__main__":
-    GitRepository()
+    GitController()

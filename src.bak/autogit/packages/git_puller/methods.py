@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import typing as t
 
-from domain import GitRepository
+from domain import GitController
 from modules import git_ops
 
 import git
@@ -50,7 +50,7 @@ def _pull(origin: git.Remote = None, branch_name: str = None):
         raise msg
 
 
-def pull(repo: GitRepository = None, exclude_branches: list[str] = None):
+def pull(repo: GitController = None, exclude_branches: list[str] = None):
     if exclude_branches:
         assert isinstance(exclude_branches, list), TypeError(
             f"exclude_branches must be of type list[str]. Got type: ({type(exclude_branches)})"

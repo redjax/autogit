@@ -15,7 +15,7 @@ from pydantic import (
 )
 
 
-class GitRepository(BaseModel):
+class GitController(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, exclude=["_repo"])
 
     local_path: t.Union[str, Path] = Field(

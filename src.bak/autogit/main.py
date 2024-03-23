@@ -6,7 +6,7 @@ from pathlib import Path
 import typing as t
 
 from core import PLATFORM
-from domain import GitRepository
+from domain import GitController
 import git
 from modules import git_ops
 from packages import git_puller
@@ -143,7 +143,7 @@ def main(exclude_branches: list[str] | None = None):
     if not CONTINUE:
         exit(1)
 
-    REPO: GitRepository = GitRepository(
+    REPO: GitController = GitController(
         local_path=GIT_REPO_PATH, exclude_branches=exclude_branches
     )
     # print(f"Git repository: {REPO}")
