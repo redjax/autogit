@@ -15,7 +15,17 @@ from pydantic import (
     field_validator,
 )
 
+
 class GitRepository(BaseModel):
+    """Custom class to store git repository details & handle git operations.
+
+    Params:
+        repo_url (str | None): A URL to a remote git repository. If no URL is passed, the repository must already exist locally.
+        local_path (str | Path): A path to the local git repository.
+        exclude_branches (optional, list[str]): An optional list of string values representing branches to skip git operations on.
+
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, exclude=["_repo"])
 
     repo_url: str | None = Field(default=None, description="Remote repository's URL.")
@@ -42,11 +52,27 @@ class GitRepository(BaseModel):
 
     @property
     def exists(self) -> bool:
+        """Check if local git repository path exists.
+
+        Returns:
+            (bool): `True` if self.local_path exists.
+            (bool): `False` if self.local_path does not exist.
+
+        """
         return self.local_path.exists()
 
     @computed_field
     @property
     def _repo(self) -> git.Repo:
+        """Initialize a git.Repo object from class params. Attempts to clone repository if `not self.local_path.exists`.
+
+        Returns:
+            (git.Repo): An initialized git.Repo object, where the repository has been cloned to a local path.
+
+        Raises:
+            (Exception): When an unhandled/unexpected exception occurs.
+
+        """
         if not self.exists:
             print(
                 f"[WARNING] Repository does not exist at {self.local_path}. Attempting to clone."
@@ -83,25 +109,8 @@ class GitRepository(BaseModel):
 
     @computed_field
     @property
-    def _repo(self) -> git.Repo:
-        if not self.exists:
-            print(FileNotFoundError(f"Could not find path '{self.local_path}'"))
-
-        try:
-            _repo: git.Repo = git.Repo(path=self.local_path)
-
-            return _repo
-
-        except Exception as exc:
-            msg = Exception(
-                f"Unhandled exception loading git repository at path '{self.local_path}'. Details: {exc}"
-            )
-
-            raise msg
-
-    @computed_field
-    @property
     def repo_name(self) -> str:
+        """Get repository name from directory path."""
         return self._repo.working_tree_dir.split("/")[-1]
 
     @computed_field
@@ -120,6 +129,7 @@ class GitRepository(BaseModel):
     @computed_field
     @property
     def remotes(self) -> list[git.Remote]:
+        """Return a list of remotes for the local repository."""
         try:
             remotes: list[git.Remote] = self._repo.remotes
 
@@ -133,6 +143,7 @@ class GitRepository(BaseModel):
     @computed_field
     @property
     def untracked_files(self) -> list[str]:
+        """Return a list of string values representing untracked local files."""
         try:
             untracked: list[str] = self._repo.untracked_files
 
@@ -145,8 +156,17 @@ class GitRepository(BaseModel):
 
             raise msg
 
-    def autopull(self, exclude_branches: list[str] | None = None) -> bool:
+    def autopull(self, exclude_branches: list[str] | None = None) -> None:
+        """Automate pulling git branches.
 
+        Params:
+            (list[str] | None): An optional list of strings representing git branch names
+                that should be skipped during git operations.
+
+        Raises:
+            (Exception): When an unhandled/unexpected exception occurs.
+
+        """
         if exclude_branches is None or len(exclude_branches) == 0:
             exclude_branches = self.exclude_branches
 

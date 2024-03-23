@@ -6,15 +6,16 @@ import tempfile
 import typing as t
 from typing import Generator
 
-from .methods import clone_repo_to_path
+from autogit.utils import git_utils
 
 from autogit.domain import GitRepository
 import git
 import pytest
 
+
 @pytest.mark.autogit
 def test_pass_git_clone(git_tempfs: str, autogit_repo_path: Path, git_repo_url: str):
-    repo: git.Repo = clone_repo_to_path(
+    repo: git.Repo = git_utils.clone_repo_to_path(
         repo_url=git_repo_url, local_path=autogit_repo_path
     )
 
@@ -24,7 +25,7 @@ def test_pass_git_clone(git_tempfs: str, autogit_repo_path: Path, git_repo_url: 
 
 @pytest.mark.autogit
 def test_pass_gitrepository(autogit_repo_path: Path, git_repo_url: str):
-    repo: git.Repo = clone_repo_to_path(
+    repo: git.Repo = git_utils.clone_repo_to_path(
         repo_url=git_repo_url, local_path=autogit_repo_path
     )
 
@@ -40,7 +41,7 @@ def test_pass_gitrepository(autogit_repo_path: Path, git_repo_url: str):
 
 @pytest.mark.autogit
 def test_pass_autogit_pull(autogit_repo_path: Path, git_repo_url: str):
-    repo: git.Repo = clone_repo_to_path(
+    repo: git.Repo = git_utils.clone_repo_to_path(
         repo_url=git_repo_url, local_path=autogit_repo_path
     )
 
