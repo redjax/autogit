@@ -1,11 +1,12 @@
-import typing as t
+from __future__ import annotations
+
 from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+import typing as t
 
-import pytest
 import git
-
+import pytest
 
 @pytest.fixture
 def git_repo_url() -> str:

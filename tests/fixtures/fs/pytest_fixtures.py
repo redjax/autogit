@@ -1,10 +1,11 @@
-import typing as t
+from __future__ import annotations
+
 from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+import typing as t
 
 import pytest
-
 
 @pytest.fixture
 def txt_file_ex() -> t.Generator[Path, t.Any, None]:

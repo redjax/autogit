@@ -1,1 +1,3 @@
-from .pytest_fixtures import git_repo_url, git_tempfs, autogit_repo_path
+from __future__ import annotations
+
+from .pytest_fixtures import autogit_repo_path, git_repo_url, git_tempfs

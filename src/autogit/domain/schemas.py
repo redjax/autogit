@@ -15,7 +15,6 @@ from pydantic import (
     field_validator,
 )
 
-
 class GitRepository(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, exclude=["_repo"])
 
