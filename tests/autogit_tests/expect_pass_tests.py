@@ -6,12 +6,10 @@ import tempfile
 import typing as t
 from typing import Generator
 
-from autogit.utils import git_utils
-
 from autogit.domain import GitRepository
+from autogit.utils import git_utils
 import git
 import pytest
-
 
 @pytest.mark.autogit
 def test_pass_git_clone(git_tempfs: str, autogit_repo_path: Path, git_repo_url: str):

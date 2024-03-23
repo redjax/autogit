@@ -15,7 +15,6 @@ from pydantic import (
     field_validator,
 )
 
-
 class GitRepository(BaseModel):
     """Custom class to store git repository details & handle git operations.
 

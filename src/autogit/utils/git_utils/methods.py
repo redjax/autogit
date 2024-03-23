@@ -5,7 +5,6 @@ import typing as t
 
 import git
 
-
 def clone_repo_to_path(
     repo_url: str = None, local_path: t.Union[str, Path] = None
 ) -> git.Repo:
