@@ -14,6 +14,19 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from contextlib import contextmanager
 
+from rich import print as rprint, pretty, inspect
+from rich.console import Console
+
+console: Console = Console()
+
+try:
+    pretty.install()
+except Exception as exc:
+    msg = Exception(
+        f"Unhandled exception installing rich.pretty. Console text will not be 'prettified'. Details: {exc}"
+    )
+    print(msg)
+
 
 @contextmanager
 def benchmark(name: str = "Unnamed benchmark", description: str = None):
@@ -30,14 +43,60 @@ def benchmark(name: str = "Unnamed benchmark", description: str = None):
     else:
         msg = f"Execution time: {total_time}"
 
-    print(msg)
+    rprint(msg)
 
 
 class WelcomeMsgData(BaseModel):
+    app_name: str = Field(default="Autogit")
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     repo_name: str = Field(default=None)
     current_branch: git.Head = Field(default=None)
+    local_path: t.Union[str, Path] = Field(default=None)
+
+    @field_validator("local_path")
+    def validate_local_path(cls, v) -> Path:
+        if isinstance(v, Path):
+            if "~" in f"{v}":
+                return v.expanduser()
+            else:
+                return v
+
+        if isinstance(v, str):
+            if "~" in f"{v}":
+                return Path(v).expanduser()
+            else:
+                return v
+
+        raise ValidationError
+
+
+def welcome_msg_bak(msg_data: WelcomeMsgData = None) -> None:
+    if not msg_data:
+        print(
+            f"<Welcome message skipping, no message data detected. Continuing script execution.>"
+        )
+        return
+
+    app_name_chars: int = len(msg_data.app_name)
+    top_hyphens: int = app_name_chars + 4
+    separator_hyphens: int = int(
+        ((len(msg_data.local_path)) * 2) - (round(len(msg_data.local_path) * 0.75, 1))
+    )
+    print(f"Separator hyphens: {separator_hyphens}")
+
+    app_info_msg: str = (
+        f"""{'-' * top_hyphens}
+| {msg_data.app_name} |
+{'-' * separator_hyphens}
+| Repository Name: {msg_data.repo_name}
+| Current Branch: {msg_data.current_branch}
+| Local Path: {msg_data.local_path}
+{'=' * separator_hyphens}
+"""
+    )
+
+    print(app_info_msg)
 
 
 def welcome_msg(msg_data: WelcomeMsgData = None) -> None:
@@ -47,8 +106,14 @@ def welcome_msg(msg_data: WelcomeMsgData = None) -> None:
         )
         return
 
-    print(
-        f"| Autogit |\n{'-' * 32}\n| Repository Name: {msg_data.repo_name}\n| Current branch: {msg_data.current_branch}\n{'=' * 32}"
+    console.print(
+        f"""
+[green underline]> {msg_data.app_name}[/green underline]
+
+[bold blue]Repository Name[/]: {msg_data.repo_name}                  
+[bold blue]Current Branch[/]: [green]{msg_data.current_branch}[/]
+[bold blue]Local Path[/]: {msg_data.local_path}
+"""
     )
 
 
@@ -85,22 +150,28 @@ def main(exclude_branches: list[str] | None = None):
     STARTING_BRANCH: git.Head = REPO._repo.head.ref
 
     welcome_msg_data: WelcomeMsgData = WelcomeMsgData(
-        repo_name=REPO.repo_name, current_branch=STARTING_BRANCH
+        repo_name=REPO.repo_name,
+        current_branch=STARTING_BRANCH,
+        local_path=GIT_REPO_PATH,
     )
     welcome_msg(welcome_msg_data)
 
-    try:
-        with benchmark(
-            name="git_puller.pull()", description="Pulling with git_puller()"
+    with benchmark(name="git_puller.pull()", description="Pulling with git_puller()"):
+        with console.status(
+            f"Running automated git branch pulls for repo '{welcome_msg_data.repo_name}'",
         ):
-            git_puller.pull(REPO, exclude_branches=exclude_branches)
+            try:
 
-    except Exception as exc:
-        msg = Exception(f"Unhandled exception running auto puller. Details: {exc}")
+                git_puller.pull(REPO, exclude_branches=exclude_branches)
 
-        STARTING_BRANCH.checkout()
+            except Exception as exc:
+                msg = Exception(
+                    f"Unhandled exception running auto puller. Details: {exc}"
+                )
 
-        raise msg
+                STARTING_BRANCH.checkout()
+
+                raise msg
 
     STARTING_BRANCH.checkout()
 
