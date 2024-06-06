@@ -51,7 +51,7 @@ six==1.16.0
 smmap==5.0.1
 stack-data==0.6.3
 time-machine==2.14.0; implementation_name != "pypy"
-tornado==6.4
+tornado==6.4.1
 traitlets==5.14.2
 typing-extensions==4.10.0
 tzdata==2024.1
